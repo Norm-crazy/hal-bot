@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HAL // Otacon — a personal AI assistant by Norman Higgs</title>
+<meta name="description" content="HAL is a personal AI assistant designed and built by Norman Higgs. Real tool use, swappable brains, layered memory, nothing saved without confirmation.">
+<meta name="theme-color" content="#070c0a">
+<meta property="og:type" content="website">
+<meta property="og:title" content="HAL // Otacon, a personal AI assistant by Norman Higgs">
+<meta property="og:description" content="A personal AI assistant I designed and built myself: real tool use, layered memory, swappable brains, nothing saved without a yes.">
+<meta property="og:url" content="https://norm-crazy.github.io/hal-bot/otacon_demo.html">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23070c0a'/%3E%3Ctext x='16' y='22' font-family='monospace' font-size='15' font-weight='700' text-anchor='middle' fill='%234dff9e'%3EHAL%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #070c0a;
+    --bg-2: #0b1411;
+    --panel: #0e1915;
+    --edge: #1a3027;
+    --edge-hi: #2a5040;
+    --green: #4dff9e;
+    --green-mid: #3cc882;
+    --green-dim: #3a9a6b;
+    --text: #e2ece6;
+    --muted: #93a99d;
+    --red: #ff6f61;
+    --amber: #ffb454;
+    --mono: 'Courier Prime', 'Courier New', monospace;
+    --sans: 'Archivo', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; background: var(--bg); }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 17px; line-height: 1.6; font-variation-settings: "wdth" 100; }
+  a { color: var(--green); text-underline-offset: 3px; }
+  a:hover { color: #fff; }
+  :focus-visible { outline: 2px solid var(--green); outline-offset: 3px; }
+
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+  .mono { font-family: var(--mono); }
+
+  /* status strip */
+  .strip { border-bottom: 1px solid var(--edge); background: var(--bg-2); font-family: var(--mono); font-size: 13px; color: var(--muted); }
+  .strip .wrap { display: flex; gap: 10px 26px; flex-wrap: wrap; align-items: center; padding-top: 10px; padding-bottom: 10px; }
+  .strip .live { color: var(--green); }
+  .strip .live::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); margin-right: 8px; vertical-align: 1px; }
+  .strip b { color: var(--text); font-weight: 400; }
+  .strip .end { margin-left: auto; }
+
+  /* top nav */
+  nav.top { position: sticky; top: 0; z-index: 5; background: rgba(7,12,10,0.88); backdrop-filter: blur(8px); border-bottom: 1px solid var(--edge); }
+  nav.top .wrap { display: flex; align-items: center; gap: 24px; height: 56px; }
+  nav.top .brand { font-family: var(--mono); font-weight: 700; letter-spacing: 3px; color: var(--green); text-decoration: none; }
+  nav.top .links { display: flex; gap: 22px; margin-left: auto; font-size: 15px; }
+  nav.top .links a { color: var(--muted); text-decoration: none; }
+  nav.top .links a:hover { color: var(--text); }
+
+  /* hero */
+  .hero { padding-top: 84px; padding-bottom: 56px; }
+  .hero .by { font-family: var(--mono); font-size: 14px; color: var(--green-mid); }
+  .hero h1 {
+    margin-top: 18px;
+    font-size: clamp(42px, 7.4vw, 92px);
+    line-height: 0.95;
+    font-weight: 800;
+    font-variation-settings: "wdth" 112;
+    letter-spacing: -1.5px;
+    max-width: 15ch;
+  }
+  .hero h1 .soft { color: var(--green); }
+  .hero .lede { margin-top: 26px; max-width: 58ch; font-size: 19px; color: #c6d6cd; }
+  .ctas { margin-top: 32px; display: flex; gap: 12px; flex-wrap: wrap; }
+  .btn { display: inline-block; text-decoration: none; font-weight: 600; font-size: 16px; padding: 12px 20px; border-radius: 4px; border: 1px solid var(--green-mid); color: var(--green); }
+  .btn.primary { background: var(--green); color: #04110a; border-color: var(--green); }
+  .btn.primary:hover { background: #fff; border-color: #fff; color: #04110a; }
+  .btn:not(.primary):hover { background: rgba(77,255,158,0.08); color: var(--green); }
+
+  /* sections */
+  section.block { padding-top: 96px; }
+  [id] { scroll-margin-top: 72px; }
+  section.block[id] { scroll-margin-top: 0; }
+  .sec-label { font-family: var(--mono); font-size: 14px; color: var(--green-mid); }
+  .sec-label::before { content: "// "; color: var(--green-dim); }
+  h2 { margin-top: 10px; font-size: clamp(30px, 4.2vw, 46px); line-height: 1.05; font-weight: 800; font-variation-settings: "wdth" 108; letter-spacing: -0.5px; max-width: 22ch; }
+  .intro { margin-top: 16px; max-width: 64ch; color: #c6d6cd; }
+
+  /* how a request flows */
+  .flow { margin-top: 40px; display: grid; grid-template-columns: 1fr 1.15fr; gap: 28px; align-items: start; }
+  .pipeline { font-family: var(--mono); font-size: 15px; color: var(--muted); border: 1px solid var(--edge); padding: 18px 20px; background: var(--panel); }
+  .pipeline { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+  .pipeline span { color: var(--text); white-space: nowrap; }
+  .pipeline i { font-style: normal; color: var(--green); }
+  .flow .notes { margin-top: 20px; }
+  .flow .notes p + p { margin-top: 14px; }
+  .flow .notes b { color: #fff; font-weight: 600; }
+
+  .console { border: 1px solid var(--edge-hi); background: #050907; border-radius: 6px; overflow: hidden; font-family: var(--mono); font-size: 14px; line-height: 1.55; }
+  .console .bar { display: flex; justify-content: space-between; padding: 8px 14px; border-bottom: 1px solid var(--edge); color: var(--green-dim); font-size: 12px; }
+  .console .bar b { color: var(--green); font-weight: 700; letter-spacing: 2px; }
+  .console .body { padding: 16px 16px 18px; }
+  .console .line + .line { margin-top: 10px; }
+  .console .you { color: var(--amber); }
+  .console .sys { color: var(--green-dim); }
+  .console .ota { color: var(--text); }
+  .console .ota::before { content: "OTACON // "; color: var(--green); }
+  .console .you::before { content: "YOU // "; }
+
+  /* capabilities */
+  .caps { margin-top: 40px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--edge); border: 1px solid var(--edge); }
+  .caps > div { background: var(--bg); padding: 22px 20px 24px; }
+  .caps .g { font-family: var(--mono); color: var(--green); font-size: 18px; }
+  .caps h3 { margin-top: 10px; font-size: 18px; font-weight: 700; font-variation-settings: "wdth" 100; }
+  .caps p { margin-top: 6px; font-size: 15px; color: var(--muted); line-height: 1.5; }
+
+  /* what I've built */
+  .timeline { margin-top: 44px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px 32px; }
+  .timeline > div { border-top: 2px solid var(--edge-hi); padding-top: 16px; }
+  .timeline .when { font-family: var(--mono); font-size: 14px; color: var(--green-mid); }
+  .timeline h3 { margin-top: 6px; font-size: 20px; line-height: 1.2; font-weight: 700; }
+  .timeline p { margin-top: 8px; font-size: 15px; color: #c6d6cd; line-height: 1.55; }
+  /* architecture */
+  .arch { margin-top: 40px; display: grid; grid-template-columns: 1.3fr 1fr; gap: 36px; align-items: start; }
+  .arch-fig { overflow-x: auto; }
+  .arch svg { width: 100%; min-width: 520px; height: auto; display: block; }
+  .arch svg text { font-family: var(--sans); fill: var(--text); }
+  .arch svg .m { font-family: var(--mono); }
+  .arch ul { list-style: none; }
+  .arch li { padding: 14px 0; border-top: 1px solid var(--edge); font-size: 16px; color: #c6d6cd; }
+  .arch li:first-child { border-top: none; padding-top: 0; }
+  .arch li b { display: block; color: #fff; font-weight: 600; }
+
+  /* rules + roadmap */
+  .two { margin-top: 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 48px; }
+  .rules { list-style: none; }
+  .rules li { padding: 14px 0; border-top: 1px solid var(--edge); }
+  .rules li b { display: block; color: #fff; font-weight: 600; }
+  .rules li span { color: var(--muted); font-size: 15px; }
+  .road h3 { font-family: var(--mono); font-weight: 400; font-size: 14px; color: var(--green-mid); margin-top: 22px; }
+  .road h3:first-child { margin-top: 0; }
+  .road ul { list-style: none; margin-top: 8px; }
+  .road li { padding-left: 18px; position: relative; color: #c6d6cd; }
+  .road li + li { margin-top: 6px; }
+  .road li::before { content: "▸"; position: absolute; left: 0; color: var(--green-dim); }
+
+  /* demo */
+  .demo { margin-top: 36px; border: 1px solid var(--edge-hi); background: #000; }
+  .demo video { display: block; width: 100%; height: auto; }
+  .caption { margin-top: 10px; font-size: 14px; color: var(--muted); }
+
+  /* builder */
+  .builder { margin-top: 40px; display: grid; grid-template-columns: 220px 1fr; gap: 36px; padding: 32px; border: 1px solid var(--edge); background: var(--panel); }
+  .builder .card { font-family: var(--mono); font-size: 14px; color: var(--muted); }
+  .builder .card .name { font-family: var(--sans); font-size: 26px; font-weight: 800; color: #fff; line-height: 1.1; font-variation-settings: "wdth" 108; }
+  .builder .card .tags { margin-top: 14px; display: flex; flex-direction: column; gap: 6px; }
+  .builder .card .tags span::before { content: "◆ "; color: var(--green-dim); }
+  .builder p + p { margin-top: 14px; }
+  .builder .ctas { margin-top: 24px; }
+
+  footer { margin-top: 96px; border-top: 1px solid var(--edge); background: var(--bg-2); }
+  footer .wrap { display: flex; flex-wrap: wrap; gap: 12px 28px; justify-content: space-between; padding-top: 22px; padding-bottom: 26px; font-family: var(--mono); font-size: 13px; color: var(--muted); }
+  footer .live { color: var(--green); }
+
+  @media (max-width: 900px) {
+    .flow, .arch, .two { grid-template-columns: 1fr; }
+    .caps { grid-template-columns: repeat(2, 1fr); }
+    .timeline { grid-template-columns: 1fr 1fr; }
+    nav.top .links { display: none; }
+  }
+  @media (max-width: 600px) {
+    body { font-size: 16px; }
+    .wrap { padding: 0 16px; }
+    .hero { padding-top: 56px; padding-bottom: 40px; }
+    .strip .end { margin-left: 0; }
+    .caps, .timeline { grid-template-columns: 1fr; }
+    section.block { padding-top: 72px; }
+    .builder { grid-template-columns: 1fr; padding: 22px 18px; gap: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="strip" aria-label="System status">
+  <div class="wrap">
+    <span class="live">HAL online</span>
+    <span>brain <b>Claude</b></span>
+    <span>memory <b>semantic vault</b></span>
+    <span>Decryption Mode <b>standby</b></span>
+    <span class="end">141.12 MHz</span>
+  </div>
+</header>
+
+<nav class="top" aria-label="Sections">
+  <div class="wrap">
+    <a class="brand" href="#top">HAL // OTACON</a>
+    <div class="links">
+      <a href="#how">How it works</a>
+      <a href="#built">What I've built</a>
+      <a href="#architecture">Architecture</a>
+      <a href="#roadmap">What's next</a>
+      <a href="#builder">About me</a>
+    </div>
+  </div>
+</nav>
+
+<main id="top">
+
+  <header class="hero wrap">
+    <p class="by">by Norman Higgs</p>
+    <h1>A personal AI assistant I designed and <span class="soft">built myself.</span></h1>
+    <p class="lede">HAL runs on a small computer in my house. He reads my email and calendar, searches my notes, writes documents, runs daily briefings, and talks back through a personality called Otacon, by text or by voice.</p>
+    <div class="ctas">
+      <a class="btn primary" href="#built">See what I've built</a>
+      <a class="btn" href="#demo">Watch the demo</a>
+    </div>
+  </header>
+
+  <!-- how it works -->
+  <section class="block wrap" id="how" aria-labelledby="how-h">
+    <p class="sec-label">how it works</p>
+    <h2 id="how-h">You ask. HAL decides which tools to use.</h2>
+    <div class="flow">
+      <div>
+        <div class="pipeline">
+          <span>web · voice · chat</span><i>→</i><span>HAL core</span><i>→</i><span>brain</span><i>→</i><span>tools</span><i>→</i><span>Otacon</span>
+        </div>
+        <div class="notes">
+          <p class="intro">There's no script deciding what a message "is". The model reads the request, picks the tools it needs, chains them, and answers in Otacon's voice.</p>
+          <p class="intro"><b>Honest by design.</b> When HAL doesn't know something, he checks his memory and then says so instead of inventing an answer.</p>
+        </div>
+      </div>
+      <div class="console" role="img" aria-label="Example exchange: asked for the weather and the latest email, HAL calls both tools at once and answers from the results.">
+        <div class="bar"><b>141.12</b><span>example exchange</span></div>
+        <div class="body">
+          <div class="line you">what's the weather in Austin, and anything new in my email?</div>
+          <div class="line sys">→ get_weather("Austin") ‖ read_email(latest)</div>
+          <div class="line ota">68 and clear in Austin. Your newest email is a shipping notice; nothing that needs a reply.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="caps" aria-label="Capabilities">
+      <div><div class="g">◍</div><h3>Layered memory</h3><p>Recent chat, a stable profile, searchable notes and documents. A miss in one isn't "I know nothing".</p></div>
+      <div><div class="g">✉</div><h3>Email &amp; calendar</h3><p>Reads, searches and drafts across accounts, on request rather than by keyword.</p></div>
+      <div><div class="g">⛁</div><h3>Drive &amp; documents</h3><p>Finds files, reads long ones in pages, and writes PDF or Word docs.</p></div>
+      <div><div class="g">⌁</div><h3>Voice</h3><p>Push-to-talk codec interface with Otacon's avatar reacting to the conversation.</p></div>
+      <div><div class="g">◷</div><h3>Background jobs</h3><p>Daily inbox and calendar sweeps delivered as a briefing, only marked read once I've seen them.</p></div>
+      <div><div class="g">✓</div><h3>Confirm before write</h3><p>Any change to stored notes is shown word for word and waits for my approval.</p></div>
+      <div><div class="g">◐</div><h3>Decryption Mode</h3><p>Runs fully on local hardware with no cloud fallback, for things that stay in the house.</p></div>
+      <div><div class="g">⇄</div><h3>Swappable brains</h3><p>Claude by default, a local model or the paid API on demand. Otacon stays the same.</p></div>
+    </div>
+  </section>
+
+  <!-- what I've built -->
+  <section class="block wrap" id="built" aria-labelledby="built-h">
+    <p class="sec-label">what I've built</p>
+    <h2 id="built-h">The engineering under the hood</h2>
+    <p class="intro">HAL is a working system I use every day, so most of the work is making him reliable, safe with my data, and cheap enough to run.</p>
+    <div class="timeline">
+      <div>
+        <div class="when">agent</div>
+        <h3>Real tool use</h3>
+        <p>The model reads each request, chooses the tools it needs and chains them together, instead of following keyword rules.</p>
+      </div>
+      <div>
+        <div class="when">memory</div>
+        <h3>Layered, searchable memory</h3>
+        <p>Recent conversation, a stable profile, and semantic search across my notes and documents, with embeddings running locally. Newer facts win over old logs.</p>
+      </div>
+      <div>
+        <div class="when">safety</div>
+        <h3>Nothing saved without a yes</h3>
+        <p>Changes to stored notes are held as drafts, shown word for word, and only written once I approve them.</p>
+      </div>
+      <div>
+        <div class="when">briefings</div>
+        <h3>Reliable background jobs</h3>
+        <p>Daily inbox and calendar sweeps arrive as a briefing, and are only marked delivered once they've actually reached me.</p>
+      </div>
+      <div>
+        <div class="when">cost</div>
+        <h3>About 85% cheaper per message</h3>
+        <p>The stable part of HAL's instructions is cached and history is trimmed by size, so each message sends far less to the model.</p>
+      </div>
+      <div>
+        <div class="when">process</div>
+        <h3>Checkpoints and tests</h3>
+        <p>Every change happens on a branch with a tagged checkpoint to roll back to, and has to pass behavior tests in plain conversation before it ships.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- architecture -->
+  <section class="block wrap" id="architecture" aria-labelledby="arch-h">
+    <p class="sec-label">architecture</p>
+    <h2 id="arch-h">Brains are replaceable. HAL is not.</h2>
+    <div class="arch">
+      <div class="arch-fig" tabindex="0" aria-label="Architecture diagram, scrolls sideways on small screens">
+      <svg viewBox="0 0 560 420" role="img" aria-label="Web, voice and chat connect to one HAL core holding memory, tools and safety rules. The core passes the same prompt and tools to a brain adapter: Claude by default, a local model in Decryption Mode, or the paid API only when chosen. Otacon's personality sits on top of whichever brain is active.">
+        <g fill="none" stroke-width="1.5">
+          <g stroke="#2a5040">
+            <rect x="20" y="10" width="150" height="40" rx="4"/><rect x="205" y="10" width="150" height="40" rx="4"/><rect x="390" y="10" width="150" height="40" rx="4"/>
+            <path d="M95 50 V76 H465 V50 M280 50 V96"/>
+          </g>
+          <rect x="20" y="96" width="520" height="140" rx="6" stroke="#4dff9e" stroke-width="2"/>
+          <path d="M193 132 V220 M366 132 V220" stroke="#1a3027"/>
+          <path d="M280 236 V272" stroke="#2a5040"/>
+          <rect x="20" y="272" width="520" height="82" rx="6" stroke="#3cc882"/>
+          <path d="M193 300 V342 M366 300 V342" stroke="#1a3027"/>
+          <rect x="120" y="376" width="320" height="34" rx="17" stroke="#ffb454"/>
+          <path d="M280 354 V376" stroke="#2a5040"/>
+        </g>
+        <text x="95" y="35" text-anchor="middle" font-size="15">Web</text>
+        <text x="280" y="35" text-anchor="middle" font-size="15">Voice</text>
+        <text x="465" y="35" text-anchor="middle" font-size="15">Chat</text>
+        <text x="36" y="122" class="m" font-size="13" fill="#4dff9e">HAL core</text>
+        <text x="106" y="158" text-anchor="middle" font-size="16" font-weight="700">Memory</text>
+        <text x="106" y="182" text-anchor="middle" font-size="13" fill="#93a99d">chat, profile,</text>
+        <text x="106" y="200" text-anchor="middle" font-size="13" fill="#93a99d">notes, documents</text>
+        <text x="280" y="158" text-anchor="middle" font-size="16" font-weight="700">Tools</text>
+        <text x="280" y="182" text-anchor="middle" font-size="13" fill="#93a99d">email, calendar, Drive,</text>
+        <text x="280" y="200" text-anchor="middle" font-size="13" fill="#93a99d">web, weather, code</text>
+        <text x="453" y="158" text-anchor="middle" font-size="16" font-weight="700">Safety</text>
+        <text x="453" y="182" text-anchor="middle" font-size="13" fill="#93a99d">confirm writes,</text>
+        <text x="453" y="200" text-anchor="middle" font-size="13" fill="#93a99d">modes, jobs</text>
+        <text x="290" y="259" class="m" font-size="12" fill="#3a9a6b">same prompt, same tools</text>
+        <text x="36" y="292" class="m" font-size="13" fill="#3cc882">brain adapter</text>
+        <text x="106" y="320" text-anchor="middle" font-size="15" font-weight="700">Claude</text>
+        <text x="106" y="340" text-anchor="middle" font-size="13" fill="#93a99d">default</text>
+        <text x="280" y="320" text-anchor="middle" font-size="15" font-weight="700">Local model</text>
+        <text x="280" y="340" text-anchor="middle" font-size="13" fill="#93a99d">Decryption Mode</text>
+        <text x="453" y="320" text-anchor="middle" font-size="15" font-weight="700">Paid API</text>
+        <text x="453" y="340" text-anchor="middle" font-size="13" fill="#93a99d">manual only</text>
+        <text x="280" y="398" text-anchor="middle" font-size="14" font-weight="700" fill="#ffb454">Otacon, the personality</text>
+      </svg>
+      </div>
+      <ul>
+        <li><b>Doorways are thin.</b>Web, voice and chat call one function and get back a reply, an emotion for the avatar, and any generated document.</li>
+        <li><b>The brain is a plug.</b>Switching models can't change Otacon's personality, memory, tools or permissions.</li>
+        <li><b>Paid API never kicks in silently.</b>If the default runs out, HAL asks before switching.</li>
+        <li><b>Python + FastAPI on an Intel NUC.</b>Local embeddings on the NUC, a separate GPU machine for local models.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- demo -->
+  <section class="block wrap" id="demo" aria-labelledby="demo-h">
+    <p class="sec-label">demo</p>
+    <h2 id="demo-h">Otacon on the codec</h2>
+    <div class="demo">
+      <video controls preload="metadata" playsinline>
+        <source src="Hal-Movie.mp4#t=0.1" type="video/mp4">
+      </video>
+    </div>
+    <p class="caption">Recorded on the current build: a live weather lookup, then a follow-up question.</p>
+  </section>
+
+  <!-- rules + roadmap -->
+  <section class="block wrap" id="rules" aria-labelledby="rules-h">
+    <p class="sec-label">how I work</p>
+    <h2 id="rules-h">How I work, and what's next</h2>
+    <div class="two">
+      <ul class="rules">
+        <li><b>Snapshot first.</b><span>Branch, tag and verify backups before any change that matters.</span></li>
+        <li><b>Test behavior, not implementation.</b><span>"Doesn't make up facts about strangers" outlives any code path.</span></li>
+        <li><b>Restore, then optimize.</b><span>Never cut capability just to save money.</span></li>
+        <li><b>Anything permanent gets confirmed.</b><span>Show the exact change before writing it.</span></li>
+        <li><b>Finish each phase.</b><span>Every phase ends with a passing test and a tag.</span></li>
+      </ul>
+      <div class="road" id="roadmap" aria-label="Roadmap">
+        <h3>// now</h3>
+        <ul>
+          <li>Moving HAL's tools into a standard tool layer (MCP) so any brain can use them</li>
+          <li>Benchmarking the new default brain against the old one</li>
+        </ul>
+        <h3>// next</h3>
+        <ul>
+          <li>A local model that acts like a real agent, not a script</li>
+          <li>A clearly labeled reduced mode for when the cloud is down</li>
+          <li>A phone app, so HAL comes with me</li>
+          <li>Secure remote access over a private VPN, so I can reach him away from home without exposing him to the internet</li>
+          <li>A voice-only smart mirror</li>
+        </ul>
+        <h3>// someday</h3>
+        <ul>
+          <li>Driving a 3D printer, reviewing camera footage, and helping design a walking robot</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- builder -->
+  <section class="block wrap" id="builder" aria-labelledby="builder-h">
+    <p class="sec-label">the builder</p>
+    <h2 id="builder-h">I fix systems without breaking the business</h2>
+    <div class="builder">
+      <div class="card">
+        <div class="name">Norman Higgs</div>
+        <div class="tags">
+          <span>POS infrastructure, 35+ sites</span>
+          <span>~18 years in IT</span>
+          <span>Foxhound Development</span>
+        </div>
+      </div>
+      <div>
+        <p>I started in call-center tech support, moved into systems administration, and now run point-of-sale infrastructure for 35+ locations as the sole owner, from vendor management to rollouts.</p>
+        <p>I'm self-taught and learn by building. HAL is where that shows most. I designed it, run it every day, and improve it with the same playbook I use at work: understand the system, make a plan, roll out in phases, and prove it with tests.</p>
+        <div class="ctas">
+          <a class="btn primary" href="mailto:nhiggsit@gmail.com">Email me</a>
+          <a class="btn" href="https://www.linkedin.com/in/norm-higgs">LinkedIn</a>
+          <a class="btn" href="https://github.com/Norm-crazy">GitHub</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© 2026 Norman Higgs</span>
+    <span>Static page. No live model, no private data.</span>
+    <span class="live">system status: active</span>
+  </div>
+</footer>
+
+</body>
+</html>
